@@ -1,12 +1,14 @@
 package com.example.mqtttestclient;
 
+import com.example.mqtttestclient.function.Conversion;
+import com.example.mqtttestclient.model.Device;
+import com.example.mqtttestclient.repository.DeviceRepository;
+import com.example.mqtttestclient.service.DeviceService;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.core.MessageProducer;
@@ -20,27 +22,29 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
-import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.util.SerializationUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
+import java.io.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
 public class MqttBeans implements MqttGateway{
+
+    @Autowired
+    private Conversion conversion;
+    @Autowired
+    private DeviceService deviceService;
+    @Autowired
+    private DeviceRepository deviceRepository;
     public static int id =3;
     Map<String, Integer> map = new HashMap<>();
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setServerURIs(new String[] {"tcp://192.168.101.228:1883"});
+        options.setServerURIs(new String[] {"tcp://192.168.101.240:1883"});
         options.setUserName("admin");
-        String pass = "password";
+        String pass = "123456";
         options.setPassword(pass.toCharArray());
         options.setCleanSession(true);
         factory.setConnectionOptions(options);
@@ -69,26 +73,97 @@ public class MqttBeans implements MqttGateway{
             public void handleMessage(Message<?> message) throws MessagingException {
                 String topic = message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString();
                 System.out.println(topic);
-                System.out.println(message.getPayload());
+                byte[] bytes = message.getPayload().toString().getBytes();
+
+                System.out.println();
+                //System.out.println(message.getPayload());
                 // MessageConverter messageConverter = new MessageConverter();
-                System.out.println(message.getPayload().toString().length());
-                byte[] data = message.getPayload().toString().getBytes();
-                byte[] results = parsePayload(data);
+                //System.out.println(message.getPayload().toString().length());
+
+
+                /*byte[] results = parsePayload(bytes);
                 for (byte result : results) {
                     System.out.print((result & 0xff) + " ");
-                }
-                System.out.println();
+                }*/
                 // byte[] data = SerializationUtils.serialize(message);
                 /*String temp = "/myTopic/testpub";
                 if(topic.equals(temp)) {
                     System.out.println("This is our topic");
                 }*/
+                String str = "";
+                for(int i = 0; i < bytes.length; i++){
+                    System.out.print(bytes[i]+" ");
+                    str += bytes[i]+" ";
+                }
+                str += " \n";
+
+                try {
+                        //File log = new File("bytearray.txt");
+                        //FileWriter myWriter = new FileWriter(String.valueOf(new FileWriter(log, true)));
+                        FileWriter myWriter = new FileWriter("bytearray.txt", true);
+                        myWriter.write(str);
+
+                        myWriter.close();
+                        //System.out.println("Successfully wrote to the file.");
+                    } catch (IOException e) {
+                        System.out.println("An error occurred.");
+                        e.printStackTrace();
+                    }
+
+                //Packet Start
+                Integer startOfFrameByte = conversion.twoByteToOneInteger(bytes[0], bytes[1]);
+                if(startOfFrameByte == 91) {
+                    System.out.println("Packet start");
+                }
+
+                //Packet Length
+                Integer packetLength = conversion.fourByteToOneInteger(bytes[2],bytes[3],bytes[4],bytes[5]);
+                System.out.println("Packet Length: "+packetLength);
+
+                //Message ID
+                Integer messageId = conversion.fourByteToOneInteger(bytes[6],bytes[7],bytes[8],bytes[9]);
+                System.out.println("Message ID: "+messageId);
+
+                //Source ID
+                Integer sourceId = conversion.fourByteToOneInteger(bytes[10],bytes[11],bytes[12],bytes[13]);
+                System.out.println("Source ID: "+sourceId);
+
+                //Destination ID
+                Integer destinationId = conversion.fourByteToOneInteger(bytes[14],bytes[15],bytes[16],bytes[17]);
+                System.out.println("Destination ID: "+destinationId);
+
+                //Payload Metadata
+                Integer metaData = conversion.twoByteToOneInteger(bytes[18],bytes[19]);
+                System.out.println("Payload Metadata: "+metaData);
+
+                byte[] payloadBytes = Arrays.copyOfRange(bytes, 20, (20+(metaData*2)));
+                String payloadString = conversion.byteArrayToString(payloadBytes);
+                Publisher publisher = new Publisher();
+                String[] words = topic.split("/");
+                Device device = deviceRepository.findByName(payloadString).orElse(null);
+                Long deviceId = (device == null)?0:device.getId();
+
+
                 if(topic.matches("/PC_1/(.*)/registration")) {
-                    System.out.println((String) message.getPayload());
-                    Publisher publisher = new Publisher();
-                    ++id;
-                    String[] words = topic.split("/");
-                    try {
+                    if(deviceId == 0) {
+                        deviceId = deviceService.addDevice(payloadString);
+                        System.out.println(deviceId);
+                        ++id;
+                        try {
+                            publisher.publish("/"+words[2]+"/registration/ID","id: "+deviceId,1,false,mqttClientFactory());
+                        } catch (MqttException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    else {
+                        try {
+                            publisher.publish("/"+words[2]+"/registration/ID","id: "+deviceId,1,false,mqttClientFactory());
+                        } catch (MqttException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    /*try {
                         if(!map.containsKey(words[2])) {
                             map.put(words[2],id);
                             publisher.publish("/"+words[2]+"/registration/ID","id: "+id,1,false,mqttClientFactory());
@@ -96,12 +171,12 @@ public class MqttBeans implements MqttGateway{
 
                     } catch (MqttException e) {
                         throw new RuntimeException(e);
-                    }
+                    }*/
                 }
                 else if(topic.matches("/(.*)/Sensor/Temp")) {
-                    String[] words = topic.split("/");
+                    words = topic.split("/");
                     System.out.println((String) message.getPayload());
-                    Publisher publisher = new Publisher();
+                    publisher = new Publisher();
                     try {
                         publisher.publish(topic+"/Acknowledgement","acknowledged data from "+words[1],1,false,mqttClientFactory());
                     } catch (MqttException e) {
@@ -156,6 +231,15 @@ public class MqttBeans implements MqttGateway{
         ObjectOutputStream os = new ObjectOutputStream(out);
         os.writeObject(obj);
         return out.toByteArray();
+    }
+
+    private static void writeBytesToFile(String fileOutput, byte[] bytes)
+            throws IOException {
+
+        try (FileOutputStream fos = new FileOutputStream(fileOutput)) {
+            fos.write(bytes);
+        }
+
     }
 
 }

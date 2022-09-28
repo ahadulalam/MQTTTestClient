@@ -11,7 +11,7 @@ public class Publisher {
         mqttMessage.setPayload(payload.getBytes());
         mqttMessage.setQos(qos);
         mqttMessage.setRetained(retained);
-        client = clientFactory.getClientInstance("tcp://192.168.101.228:1883","admin");
+        client = clientFactory.getClientInstance("tcp://192.168.101.240:1883","admin");
         client.connect();
         client.publish(topic, mqttMessage);
         //Mqtt.getInstance().publish(topic, mqttMessage);
