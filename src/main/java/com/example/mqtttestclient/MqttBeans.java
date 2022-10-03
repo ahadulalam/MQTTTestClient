@@ -1,6 +1,7 @@
 package com.example.mqtttestclient;
 
 import com.example.mqtttestclient.function.Conversion;
+import com.example.mqtttestclient.function.PacketFormat;
 import com.example.mqtttestclient.model.Device;
 import com.example.mqtttestclient.repository.DeviceRepository;
 import com.example.mqtttestclient.service.DeviceService;
@@ -37,6 +38,12 @@ public class MqttBeans implements MqttGateway{
     private DeviceService deviceService;
     @Autowired
     private DeviceRepository deviceRepository;
+
+    @Autowired
+    private PacketFormat packetFormat;
+
+    @Autowired
+    MqttGateway mqttGateway;
     public static int id =3;
     Map<String, Integer> map = new HashMap<>();
     public MqttPahoClientFactory mqttClientFactory() {
@@ -58,7 +65,7 @@ public class MqttBeans implements MqttGateway{
 
     @Bean
     public MessageProducer inbound() {
-        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter("ServerIn",mqttClientFactory(),"#");
+        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter("ServerIn",mqttClientFactory(),"/PC_1/#");
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setQos(1);
@@ -86,21 +93,11 @@ public class MqttBeans implements MqttGateway{
                     System.out.print((result & 0xff) + " ");
                 }*/
                 // byte[] data = SerializationUtils.serialize(message);
-                /*String temp = "/myTopic/testpub";
-                if(topic.equals(temp)) {
-                    System.out.println("This is our topic");
-                }*/
-                String str = "";
-                for(int i = 0; i < bytes.length; i++){
-                    System.out.print(bytes[i]+" ");
-                    str += bytes[i]+" ";
-                }
-                str += " \n";
 
-                try {
+                /*try {
                         //File log = new File("bytearray.txt");
                         //FileWriter myWriter = new FileWriter(String.valueOf(new FileWriter(log, true)));
-                        FileWriter myWriter = new FileWriter("bytearray.txt", true);
+                        FileWriter myWriter = new FileWriter("bytearray2.txt", true);
                         myWriter.write(str);
 
                         myWriter.close();
@@ -108,7 +105,7 @@ public class MqttBeans implements MqttGateway{
                     } catch (IOException e) {
                         System.out.println("An error occurred.");
                         e.printStackTrace();
-                    }
+                    }*/
 
                 //Packet Start
                 Integer startOfFrameByte = conversion.twoByteToOneInteger(bytes[0], bytes[1]);
@@ -140,22 +137,78 @@ public class MqttBeans implements MqttGateway{
                 String payloadString = conversion.byteArrayToString(payloadBytes);
                 Publisher publisher = new Publisher();
                 String[] words = topic.split("/");
-                Device device = deviceRepository.findByName(payloadString).orElse(null);
-                Long deviceId = (device == null)?0:device.getId();
 
+                if(messageId == 1){
+                    Device device = deviceRepository.findByName(payloadString).orElse(null);
+                    Long deviceId = (device == null)?0:device.getId();
+                    System.out.println("device id = "+deviceId);
 
-                if(topic.matches("/PC_1/(.*)/registration")) {
+                    if(deviceId == 0){
+                        //deviceId = deviceService.addDevice(payloadString);
+                    }
+                    byte[] publishPayload = conversion.oneLongToFourByte(deviceId);
+                    /*byte[] publishPayload = new byte[2000];
+                    for (int i = 0; i < 2000; i++) {
+                        publishPayload[i] = 0;
+                    }*/
+                    byte[] publishPacket = new byte[]{};
+                    try {
+                        publishPacket = packetFormat.createPacketFormat(13,2, 64250, 0, 02, publishPayload);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        publisher.publish(/*payloadString+*/"/registration/ID",publishPacket,1,false,mqttClientFactory());
+                    } catch (MqttException e) {
+                        throw new RuntimeException(e);
+                    }
+                    /*if(deviceId == 0) {
+
+                        ++id;
+                        //mqttGateway.sendToMqtt("id: "+deviceId,"/"+words[2]+"/registration/ID" );
+                        try {
+                            //Publish Data
+                            byte[] publishPayload = conversion.oneLongToFourByte(deviceId);
+                            String publishPacket = packetFormat.createPacketFormat(13,2, 64250, 0, 02, publishPayload);
+                            publisher.publish(payloadString+"/registration/ID",publishPacket,1,false,mqttClientFactory());
+                        } catch (MqttException e) {
+                            throw new RuntimeException(e);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    else {
+                        //mqttGateway.sendToMqtt("id: "+deviceId,"/"+words[2]+"/registration/ID" );
+                        byte[] publishPayload = conversion.oneLongToFourByte(deviceId);
+                        try {
+                            String publishPacket = packetFormat.createPacketFormat(13,2, 64250, 0, 02, publishPayload);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        try {
+                            publisher.publish(payloadString+"/registration/ID",payloadString,1,false,mqttClientFactory());
+                        } catch (MqttException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }*/
+                }
+
+                /*if(topic.matches("/PC_1/(.*)/registration")) {
                     if(deviceId == 0) {
                         deviceId = deviceService.addDevice(payloadString);
                         System.out.println(deviceId);
                         ++id;
+                        //mqttGateway.sendToMqtt("id: "+deviceId,"/"+words[2]+"/registration/ID" );
                         try {
+
                             publisher.publish("/"+words[2]+"/registration/ID","id: "+deviceId,1,false,mqttClientFactory());
                         } catch (MqttException e) {
                             throw new RuntimeException(e);
                         }
                     }
                     else {
+                        //mqttGateway.sendToMqtt("id: "+deviceId,"/"+words[2]+"/registration/ID" );
                         try {
                             publisher.publish("/"+words[2]+"/registration/ID","id: "+deviceId,1,false,mqttClientFactory());
                         } catch (MqttException e) {
@@ -163,7 +216,7 @@ public class MqttBeans implements MqttGateway{
                         }
                     }
 
-                    /*try {
+                    *//*try {
                         if(!map.containsKey(words[2])) {
                             map.put(words[2],id);
                             publisher.publish("/"+words[2]+"/registration/ID","id: "+id,1,false,mqttClientFactory());
@@ -171,18 +224,19 @@ public class MqttBeans implements MqttGateway{
 
                     } catch (MqttException e) {
                         throw new RuntimeException(e);
-                    }*/
-                }
-                else if(topic.matches("/(.*)/Sensor/Temp")) {
+                    }*//*
+                }*/
+                /*else if(topic.matches("/(.*)/Sensor/Temp")) {
                     words = topic.split("/");
                     System.out.println((String) message.getPayload());
+                    //mqttGateway.sendToMqtt("acknowledged data from "+words[1],"/"+words[2]+"/registration/ID" );
                     publisher = new Publisher();
                     try {
-                        publisher.publish(topic+"/Acknowledgement","acknowledged data from "+words[1],1,false,mqttClientFactory());
+                        publisher.publish(topic+"/Acknowledgement","ack",1,false,mqttClientFactory());
                     } catch (MqttException e) {
                         throw new RuntimeException(e);
                     }
-                }
+                }*/
                 else if(topic.matches("(.*)/Acknowledgement")) {
                     System.out.println(message.getPayload());
                     /*Publisher publisher = new Publisher();
@@ -205,7 +259,7 @@ public class MqttBeans implements MqttGateway{
     public MessageHandler mqttOutbound() {
         MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler("serverOut",mqttClientFactory());
         messageHandler.setAsync(true);
-        messageHandler.setDefaultTopic("#");
+        messageHandler.setDefaultTopic("/PC_1/#");
         return messageHandler;
     }
 
