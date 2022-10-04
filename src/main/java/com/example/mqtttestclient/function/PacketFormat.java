@@ -34,6 +34,7 @@ public class PacketFormat {
         outputStream.write( 0x5 ); outputStream.write( 0xD );
 
         byte [] bytePacket = outputStream.toByteArray();
+
         return  bytePacket;
         /*String packet = "";
         for (int i = 0; i < bytePacket.length; i++) {

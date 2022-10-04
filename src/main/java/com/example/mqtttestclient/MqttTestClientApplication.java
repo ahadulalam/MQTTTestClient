@@ -1,7 +1,9 @@
 package com.example.mqtttestclient;
 
+import com.example.mqtttestclient.service.PreDefinedDataService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
@@ -10,7 +12,10 @@ import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 public class MqttTestClientApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(MqttTestClientApplication.class, args);
+        ApplicationContext applicationContext = SpringApplication.run(MqttTestClientApplication.class, args);
+        PreDefinedDataService preDefinedDataService = applicationContext.getBean(PreDefinedDataService.class);
+
+        //preDefinedDataService.sensorSaveAll();
     }
     /*@Bean
     public IntegrationFlow mqttOutboundFlow() {

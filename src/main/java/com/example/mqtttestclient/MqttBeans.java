@@ -2,9 +2,10 @@ package com.example.mqtttestclient;
 
 import com.example.mqtttestclient.function.Conversion;
 import com.example.mqtttestclient.function.PacketFormat;
-import com.example.mqtttestclient.model.Device;
-import com.example.mqtttestclient.repository.DeviceRepository;
+import com.example.mqtttestclient.entity.*;
+import com.example.mqtttestclient.repository.*;
 import com.example.mqtttestclient.service.DeviceService;
+import com.example.mqtttestclient.service.MqttService;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,20 @@ public class MqttBeans implements MqttGateway{
     private DeviceService deviceService;
     @Autowired
     private DeviceRepository deviceRepository;
-
+    @Autowired
+    private DataTypeRepository dataTypeRepository;
+    @Autowired
+    private FactoryRepository factoryRepository;
+    @Autowired
+    private MachineRepository machineRepository;
+    @Autowired
+    private PlantRepository plantRepository;
+    @Autowired
+    private SensorRepository sensorRepository;
+    @Autowired
+    private TransactionRepository transactionRepository;
+    @Autowired
+    private MqttService mqttService;
     @Autowired
     private PacketFormat packetFormat;
 
@@ -49,7 +63,7 @@ public class MqttBeans implements MqttGateway{
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setServerURIs(new String[] {"tcp://192.168.101.240:1883"});
+        options.setServerURIs(new String[] {"tcp://192.168.102.97:1883"});
         options.setUserName("admin");
         String pass = "123456";
         options.setPassword(pass.toCharArray());
@@ -109,143 +123,83 @@ public class MqttBeans implements MqttGateway{
 
                 //Packet Start
                 Integer startOfFrameByte = conversion.twoByteToOneInteger(bytes[0], bytes[1]);
+
+                //Check Packet Starting Byte (HEX) 5B = (int) 91
                 if(startOfFrameByte == 91) {
                     System.out.println("Packet start");
+
+                    //Packet Length
+                    Integer packetLength = conversion.fourByteToOneInteger(bytes[2],bytes[3],bytes[4],bytes[5]);
+                    System.out.println("Packet Length: "+packetLength);
+
+                    //Check is twice packet length equal to MQTT receive length
+                    if((packetLength * 2) == bytes.length){
+                        //End of Bytes
+                        Integer endOfFrameByte = conversion.twoByteToOneInteger(bytes[(packetLength*2) - 2], bytes[(packetLength*2) - 1]);
+                        System.out.println("End of Packet: "+endOfFrameByte);
+
+                        //Check Packet end Byte (HEX) 5D = (int) 93
+                        if(endOfFrameByte == 93){
+                            //Message ID
+                            Integer messageId = conversion.fourByteToOneInteger(bytes[6],bytes[7],bytes[8],bytes[9]);
+                            System.out.println("Message ID: "+messageId);
+
+                            //Source ID
+                            Integer sourceId = conversion.fourByteToOneInteger(bytes[10],bytes[11],bytes[12],bytes[13]);
+                            System.out.println("Source ID: "+sourceId);
+
+                            //Destination ID
+                            Integer destinationId = conversion.fourByteToOneInteger(bytes[14],bytes[15],bytes[16],bytes[17]);
+                            System.out.println("Destination ID: "+destinationId);
+
+                            //Payload Metadata
+                            Integer metaData = conversion.twoByteToOneInteger(bytes[18],bytes[19]);
+                            System.out.println("Payload Metadata: "+metaData);
+
+                            byte[] payloadBytes = Arrays.copyOfRange(bytes, 20, (20+(metaData*2)));
+                            String payloadString = conversion.byteArrayToString(payloadBytes);
+                            Publisher publisher = new Publisher();
+                            String[] words = topic.split("/");
+
+                            //*************Retrieve all packet Data***********\
+
+                            //Registration Message id = 1
+                            byte[] publishPacket = new byte[]{};
+                            try {
+                                publishPacket = mqttService.mqttRequest(payloadString, messageId, payloadBytes, bytes,sourceId);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                            //Publish to MQTT
+                            try {
+                                publisher.publish("/registration/ID",publishPacket,1,false,mqttClientFactory());
+                            } catch (MqttException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                            /*if(messageId == 3){
+
+                                try {
+                                    //Create Publish Packet
+                                    publishPacket = packetFormat.createPacketFormat(13,2, sourceId, 0, 02, payloadBytes);
+
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                try {
+                                    //Publish to MQTT
+                                    publisher.publish("/registration/ID",publishPacket,1,false,mqttClientFactory());
+                                } catch (MqttException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }*/
+
+                        }
+                    }
                 }
 
-                //Packet Length
-                Integer packetLength = conversion.fourByteToOneInteger(bytes[2],bytes[3],bytes[4],bytes[5]);
-                System.out.println("Packet Length: "+packetLength);
 
-                //Message ID
-                Integer messageId = conversion.fourByteToOneInteger(bytes[6],bytes[7],bytes[8],bytes[9]);
-                System.out.println("Message ID: "+messageId);
-
-                //Source ID
-                Integer sourceId = conversion.fourByteToOneInteger(bytes[10],bytes[11],bytes[12],bytes[13]);
-                System.out.println("Source ID: "+sourceId);
-
-                //Destination ID
-                Integer destinationId = conversion.fourByteToOneInteger(bytes[14],bytes[15],bytes[16],bytes[17]);
-                System.out.println("Destination ID: "+destinationId);
-
-                //Payload Metadata
-                Integer metaData = conversion.twoByteToOneInteger(bytes[18],bytes[19]);
-                System.out.println("Payload Metadata: "+metaData);
-
-                byte[] payloadBytes = Arrays.copyOfRange(bytes, 20, (20+(metaData*2)));
-                String payloadString = conversion.byteArrayToString(payloadBytes);
-                Publisher publisher = new Publisher();
-                String[] words = topic.split("/");
-
-                if(messageId == 1){
-                    Device device = deviceRepository.findByName(payloadString).orElse(null);
-                    Long deviceId = (device == null)?0:device.getId();
-                    System.out.println("device id = "+deviceId);
-
-                    if(deviceId == 0){
-                        //deviceId = deviceService.addDevice(payloadString);
-                    }
-                    byte[] publishPayload = conversion.oneLongToFourByte(deviceId);
-                    /*byte[] publishPayload = new byte[2000];
-                    for (int i = 0; i < 2000; i++) {
-                        publishPayload[i] = 0;
-                    }*/
-                    byte[] publishPacket = new byte[]{};
-                    try {
-                        publishPacket = packetFormat.createPacketFormat(13,2, 64250, 0, 02, publishPayload);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    try {
-                        publisher.publish(/*payloadString+*/"/registration/ID",publishPacket,1,false,mqttClientFactory());
-                    } catch (MqttException e) {
-                        throw new RuntimeException(e);
-                    }
-                    /*if(deviceId == 0) {
-
-                        ++id;
-                        //mqttGateway.sendToMqtt("id: "+deviceId,"/"+words[2]+"/registration/ID" );
-                        try {
-                            //Publish Data
-                            byte[] publishPayload = conversion.oneLongToFourByte(deviceId);
-                            String publishPacket = packetFormat.createPacketFormat(13,2, 64250, 0, 02, publishPayload);
-                            publisher.publish(payloadString+"/registration/ID",publishPacket,1,false,mqttClientFactory());
-                        } catch (MqttException e) {
-                            throw new RuntimeException(e);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                    else {
-                        //mqttGateway.sendToMqtt("id: "+deviceId,"/"+words[2]+"/registration/ID" );
-                        byte[] publishPayload = conversion.oneLongToFourByte(deviceId);
-                        try {
-                            String publishPacket = packetFormat.createPacketFormat(13,2, 64250, 0, 02, publishPayload);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        try {
-                            publisher.publish(payloadString+"/registration/ID",payloadString,1,false,mqttClientFactory());
-                        } catch (MqttException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }*/
-                }
-
-                /*if(topic.matches("/PC_1/(.*)/registration")) {
-                    if(deviceId == 0) {
-                        deviceId = deviceService.addDevice(payloadString);
-                        System.out.println(deviceId);
-                        ++id;
-                        //mqttGateway.sendToMqtt("id: "+deviceId,"/"+words[2]+"/registration/ID" );
-                        try {
-
-                            publisher.publish("/"+words[2]+"/registration/ID","id: "+deviceId,1,false,mqttClientFactory());
-                        } catch (MqttException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                    else {
-                        //mqttGateway.sendToMqtt("id: "+deviceId,"/"+words[2]+"/registration/ID" );
-                        try {
-                            publisher.publish("/"+words[2]+"/registration/ID","id: "+deviceId,1,false,mqttClientFactory());
-                        } catch (MqttException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    *//*try {
-                        if(!map.containsKey(words[2])) {
-                            map.put(words[2],id);
-                            publisher.publish("/"+words[2]+"/registration/ID","id: "+id,1,false,mqttClientFactory());
-                        }
-
-                    } catch (MqttException e) {
-                        throw new RuntimeException(e);
-                    }*//*
-                }*/
-                /*else if(topic.matches("/(.*)/Sensor/Temp")) {
-                    words = topic.split("/");
-                    System.out.println((String) message.getPayload());
-                    //mqttGateway.sendToMqtt("acknowledged data from "+words[1],"/"+words[2]+"/registration/ID" );
-                    publisher = new Publisher();
-                    try {
-                        publisher.publish(topic+"/Acknowledgement","ack",1,false,mqttClientFactory());
-                    } catch (MqttException e) {
-                        throw new RuntimeException(e);
-                    }
-                }*/
-                else if(topic.matches("(.*)/Acknowledgement")) {
-                    System.out.println(message.getPayload());
-                    /*Publisher publisher = new Publisher();
-                    try {
-                        publisher.publish("/Acknowledgement","acknowledged",1,false,mqttClientFactory());
-                    } catch (MqttException e) {
-                        throw new RuntimeException(e);
-                    }*/
-                }
 
             }
         };

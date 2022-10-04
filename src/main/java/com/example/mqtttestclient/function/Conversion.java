@@ -43,7 +43,7 @@ public class Conversion {
     public String byteArrayToString(byte[] bytes){
         String byteString = new String();
         for(int i = 0; i < bytes.length; i++){
-            byteString += Integer.toHexString(bytes[i] & 0xFF);
+            byteString += Integer.toHexString(bytes[i] & 0xFF).toUpperCase();
         }
         return byteString;
     }
