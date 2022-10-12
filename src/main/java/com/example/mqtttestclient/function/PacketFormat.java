@@ -21,7 +21,7 @@ public class PacketFormat {
         byte[] byteMessageId = conversion.oneByteToFourByte(messageId);
         byte[] byteSourceId = conversion.oneByteToFourByte(sourceId);
         byte[] byteDestinationId = conversion.oneByteToFourByte(destinationId);
-        byte[] bytePayloadLength = conversion.oneByteToTwoByte(payloadLength);
+        byte[] bytePayloadLength = conversion.oneByteToEightByte(payloadLength);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
         outputStream.write( 0x5 );outputStream.write( 0xB );

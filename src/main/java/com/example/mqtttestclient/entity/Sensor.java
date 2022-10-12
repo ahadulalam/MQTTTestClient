@@ -1,5 +1,4 @@
 package com.example.mqtttestclient.entity;
-
 import lombok.Data;
 
 import javax.persistence.*;
@@ -14,8 +13,11 @@ public class Sensor {
     private Long id;
     private String name;
 
+    /*@Enumerated(EnumType.STRING)
+    private DataType dataType;
+
     @OneToMany(mappedBy = "sensor", cascade = CascadeType.ALL)
-    private List<DeviceSensorDataType> deviceSensorDataTypes;
+    private List<DeviceSensor> deviceSensors;*/
 
     /*@ManyToMany(mappedBy = "sensors")
     private List<Device> devices;*/

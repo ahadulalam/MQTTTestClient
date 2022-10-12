@@ -1,13 +1,16 @@
 package com.example.mqtttestclient.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Entity
-@Table(name = "device_sensor_data_type")
 @Data
-public class DeviceSensorDataType {
+@NoArgsConstructor
+@AllArgsConstructor
+public class ParticularSensor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -16,9 +19,5 @@ public class DeviceSensorDataType {
     private Sensor sensor;
 
     @ManyToOne
-    private Device device;
-
-    @ManyToOne
     private DataType dataType;
-
 }

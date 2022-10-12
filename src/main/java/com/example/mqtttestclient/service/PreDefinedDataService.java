@@ -5,6 +5,13 @@ import com.example.mqtttestclient.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.Objects;
+
 @Service
 public class PreDefinedDataService {
     @Autowired
@@ -65,6 +72,18 @@ public class PreDefinedDataService {
     }
 
     public void sensorSaveAll(){
+        Map<Integer, byte[]> imageData = new HashMap<>();
+        byte[] first = new byte[]{0x0, 0x1};
+        byte[] second = new byte[]{0x2, 0x3};
+        imageData.put(1,first);
+        byte[] result = new byte[first.length + second.length];
+        System.arraycopy(first, 0, result, 0, first.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+
+        for(int i = 0; i < result.length; i++){
+            System.out.println(result[i]);
+        }
+
         //Sensor
         addSensor(1L , "Temperature Sensor");
         addSensor(2L , "Pressure Sensor");

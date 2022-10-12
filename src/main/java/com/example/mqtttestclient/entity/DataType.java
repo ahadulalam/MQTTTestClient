@@ -10,12 +10,12 @@ import java.util.List;
 @Table(name = "datatype")
 public class DataType {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
 
-    @OneToMany(mappedBy = "dataType", cascade = CascadeType.ALL)
-    private List<DeviceSensorDataType> deviceSensorDataTypes;
+    /*@OneToMany(mappedBy = "dataType", cascade = CascadeType.ALL)
+    private List<DeviceSensor> deviceSensorDataTypes;*/
 
     /*@ManyToMany
     private List<Sensor> sensors;*/

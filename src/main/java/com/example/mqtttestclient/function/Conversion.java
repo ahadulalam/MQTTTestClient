@@ -39,6 +39,9 @@ public class Conversion {
     public Integer fourByteToOneInteger(byte one, byte two, byte three, byte four){
         return (one << 12)| (two << 8) | (three << 4) | four;
     }
+    public Integer eightByteToOneInteger(byte one, byte two, byte three, byte four, byte five, byte six, byte seven, byte eight){
+        return (one << 28)| (two << 24) | (three << 20) | (four << 16) | (five << 12) | (six << 8) | (seven << 4) | eight;
+    }
 
     public String byteArrayToString(byte[] bytes){
         String byteString = new String();
@@ -60,6 +63,19 @@ public class Conversion {
         bytes[1] = (byte) ((one >> 8) & 0xF);
         bytes[2] = (byte) ((one >> 4) & 0xF);
         bytes[3] = (byte) (one & 0xF);
+
+        return bytes;
+    }
+    public byte[] oneByteToEightByte(int one){
+        byte[] bytes = new byte[8];
+        bytes[0] = (byte) (one >> 28);
+        bytes[1] = (byte) ((one >> 24) & 0xF);
+        bytes[2] = (byte) ((one >> 20) & 0xF);
+        bytes[3] = (byte) ((one >> 16) & 0xF);
+        bytes[4] = (byte) ((one >> 12) & 0xF);
+        bytes[5] = (byte) ((one >> 8) & 0xF);
+        bytes[6] = (byte) ((one >> 4) & 0xF);
+        bytes[7] = (byte) (one & 0xF);
 
         return bytes;
     }

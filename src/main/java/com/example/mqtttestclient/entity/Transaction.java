@@ -14,12 +14,15 @@ public class Transaction {
 
     String payload;
 
-    @ManyToOne
+    /*@ManyToOne
     private Device device;
 
     @ManyToOne
     private Sensor sensor;
 
     @ManyToOne
-    private DataType dataType;
+    private DataType dataType;*/
+
+    @ManyToOne
+    private DeviceWiseParticularSensor deviceWiseParticularSensor;
 }

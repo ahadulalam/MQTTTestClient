@@ -10,15 +10,12 @@ import java.util.List;
 @Data
 public class Device {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
 
     @ManyToOne
     private Machine machine;
-
-    @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
-    private List<DeviceSensorDataType> deviceSensorDataTypes;
 
     /*@ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(

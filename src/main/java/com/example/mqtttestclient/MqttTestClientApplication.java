@@ -15,7 +15,7 @@ public class MqttTestClientApplication {
         ApplicationContext applicationContext = SpringApplication.run(MqttTestClientApplication.class, args);
         PreDefinedDataService preDefinedDataService = applicationContext.getBean(PreDefinedDataService.class);
 
-        //preDefinedDataService.sensorSaveAll();
+        preDefinedDataService.sensorSaveAll();
     }
     /*@Bean
     public IntegrationFlow mqttOutboundFlow() {

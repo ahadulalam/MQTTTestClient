@@ -2,7 +2,6 @@ package com.example.mqtttestclient;
 
 import com.example.mqtttestclient.function.Conversion;
 import com.example.mqtttestclient.function.PacketFormat;
-import com.example.mqtttestclient.entity.*;
 import com.example.mqtttestclient.repository.*;
 import com.example.mqtttestclient.service.DeviceService;
 import com.example.mqtttestclient.service.MqttService;
@@ -63,7 +62,7 @@ public class MqttBeans implements MqttGateway{
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setServerURIs(new String[] {"tcp://192.168.102.97:1883"});
+        options.setServerURIs(new String[] {"tcp://192.168.102.135:1883"});
         options.setUserName("admin");
         String pass = "123456";
         options.setPassword(pass.toCharArray());
@@ -95,32 +94,9 @@ public class MqttBeans implements MqttGateway{
                 String topic = message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString();
                 System.out.println(topic);
                 byte[] bytes = message.getPayload().toString().getBytes();
-
                 System.out.println();
-                //System.out.println(message.getPayload());
-                // MessageConverter messageConverter = new MessageConverter();
-                //System.out.println(message.getPayload().toString().length());
 
-
-                /*byte[] results = parsePayload(bytes);
-                for (byte result : results) {
-                    System.out.print((result & 0xff) + " ");
-                }*/
-                // byte[] data = SerializationUtils.serialize(message);
-
-                /*try {
-                        //File log = new File("bytearray.txt");
-                        //FileWriter myWriter = new FileWriter(String.valueOf(new FileWriter(log, true)));
-                        FileWriter myWriter = new FileWriter("bytearray2.txt", true);
-                        myWriter.write(str);
-
-                        myWriter.close();
-                        //System.out.println("Successfully wrote to the file.");
-                    } catch (IOException e) {
-                        System.out.println("An error occurred.");
-                        e.printStackTrace();
-                    }*/
-
+                /*********** Retrieve Packet Data Start  *********************/
                 //Packet Start
                 Integer startOfFrameByte = conversion.twoByteToOneInteger(bytes[0], bytes[1]);
 
@@ -153,48 +129,29 @@ public class MqttBeans implements MqttGateway{
                             System.out.println("Destination ID: "+destinationId);
 
                             //Payload Metadata
-                            Integer metaData = conversion.twoByteToOneInteger(bytes[18],bytes[19]);
+                            Integer metaData = conversion.eightByteToOneInteger(bytes[18],bytes[19], bytes[20],bytes[21], bytes[22],bytes[23], bytes[24],bytes[25]);
                             System.out.println("Payload Metadata: "+metaData);
 
-                            byte[] payloadBytes = Arrays.copyOfRange(bytes, 20, (20+(metaData*2)));
+                            byte[] payloadBytes = Arrays.copyOfRange(bytes, 26, bytes.length-2);
                             String payloadString = conversion.byteArrayToString(payloadBytes);
+                            System.out.println(payloadString);
                             Publisher publisher = new Publisher();
                             String[] words = topic.split("/");
 
-                            //*************Retrieve all packet Data***********\
+                            /*********** Retrieve Packet Data End  *********************/
 
-                            //Registration Message id = 1
                             byte[] publishPacket = new byte[]{};
                             try {
-                                publishPacket = mqttService.mqttRequest(payloadString, messageId, payloadBytes, bytes,sourceId);
+                                publishPacket = mqttService.mqttRequest(messageId,sourceId,destinationId,  payloadString, payloadBytes);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
-
                             //Publish to MQTT
                             try {
                                 publisher.publish("/registration/ID",publishPacket,1,false,mqttClientFactory());
                             } catch (MqttException e) {
                                 throw new RuntimeException(e);
                             }
-
-                            /*if(messageId == 3){
-
-                                try {
-                                    //Create Publish Packet
-                                    publishPacket = packetFormat.createPacketFormat(13,2, sourceId, 0, 02, payloadBytes);
-
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                                try {
-                                    //Publish to MQTT
-                                    publisher.publish("/registration/ID",publishPacket,1,false,mqttClientFactory());
-                                } catch (MqttException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }*/
-
                         }
                     }
                 }
