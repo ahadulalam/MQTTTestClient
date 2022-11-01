@@ -93,6 +93,7 @@ public class PreDefinedDataService {
         addSensor(6L , "Position Sensor");
         addSensor(7L , "IR Sensor");
         addSensor(8L , "Load Cell");
+        addSensor(9L , "Photo Sensor");
 
         //Data Type
         addDataType(1L, "Boolean");
@@ -106,6 +107,7 @@ public class PreDefinedDataService {
         addDataType(9L, "float");
         addDataType(10L, "double");
         addDataType(11L, "long");
+        addDataType(12L, "String");
 
         //Factory
         addFactory(1L, "A1");

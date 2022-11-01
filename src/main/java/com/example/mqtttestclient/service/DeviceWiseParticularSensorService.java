@@ -27,7 +27,7 @@ public class DeviceWiseParticularSensorService {
     private DeviceWiseParticularSensorRepository deviceWiseParticularSensorRepository;
 
     public Long createDeviceWiseParticularSensor(Long deviceId, Long particularSensorId, Long uniqueSensorId) {
-        DeviceWiseParticularSensor deviceWiseParticularSensor = deviceWiseParticularSensorRepository.findByDeviceIdAndParticularSensorIdAndUniqueSensorId(uniqueSensorId, deviceId, particularSensorId).orElse(null);
+        DeviceWiseParticularSensor deviceWiseParticularSensor = deviceWiseParticularSensorRepository.findByDeviceIdAndParticularSensorIdAndUniqueSensorId(deviceId, particularSensorId, uniqueSensorId).orElse(null);
         Long deviceWiseParticularSensorId;
         if(deviceWiseParticularSensor == null){
             Device device = deviceRepository.findById(deviceId).orElse(null); //TODO add validation

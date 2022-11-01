@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 
+
 @SpringBootApplication
 public class MqttTestClientApplication {
 

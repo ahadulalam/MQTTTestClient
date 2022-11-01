@@ -2,7 +2,6 @@ package com.example.mqtttestclient.function;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
@@ -10,7 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Data
 @AllArgsConstructor

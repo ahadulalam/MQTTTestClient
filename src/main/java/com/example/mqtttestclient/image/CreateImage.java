@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
@@ -40,7 +41,7 @@ public class CreateImage {
         byte[] publishPacket = new byte[]{};
         try {
             //Create Publish Packet
-            publishPacket = packetFormat.createPacketFormat(13,8, 64250, sourceId, 02, publishPayload);
+            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),8, 64250, sourceId, (publishPayload.length / 2), publishPayload);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -48,7 +49,7 @@ public class CreateImage {
 
         return publishPacket;
     }
-    public byte[] imageDataEnd(Integer sourceId) throws IOException {
+    public byte[] imageDataEnd(Integer sourceId, Integer metaData) throws IOException {
         System.out.println("Image Data");
         System.out.println("--------------------------");
         byte[] imageFullData = imageData.get(sourceId);
@@ -72,7 +73,7 @@ public class CreateImage {
         System.out.println(res);
 
         if(res == "Image create successfully"){
-            DeviceWiseParticularSensor deviceWiseParticularSensor = deviceWiseParticularSensorRepository.findById(1L).get();
+            DeviceWiseParticularSensor deviceWiseParticularSensor = deviceWiseParticularSensorRepository.findById(metaData.longValue()).get();
             Transaction transaction = new Transaction();
             transaction.setPayload(imageName);
             transaction.setDeviceWiseParticularSensor(deviceWiseParticularSensor);
@@ -84,7 +85,7 @@ public class CreateImage {
         byte[] publishPacket = new byte[]{};
         try {
             //Create Publish Packet
-            publishPacket = packetFormat.createPacketFormat(13,8, 64250, sourceId, 02, publishPayload);
+            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),8, 64250, sourceId, (publishPayload.length / 2), publishPayload);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -109,7 +110,7 @@ public class CreateImage {
         byte[] publishPacket = new byte[]{};
         try {
             //Create Publish Packet
-            publishPacket = packetFormat.createPacketFormat(13,6, 64250, sourceId, 02, publishPayload);
+            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),6, 64250, sourceId, (publishPayload.length / 2), publishPayload);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
