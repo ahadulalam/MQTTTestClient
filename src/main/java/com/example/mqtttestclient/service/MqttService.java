@@ -104,7 +104,8 @@ public class MqttService {
 
         //Packet Start
         Integer startOfFrameByte = conversion.twoByteToOneInteger(bytes[0], bytes[1]);
-        System.out.println("Packet start");
+        System.out.println("Received Packet");
+        System.out.println("-------------------------------------------------------------");
 
         //Packet Length
         Integer packetLength = conversion.fourByteToOneInteger(bytes[2],bytes[3],bytes[4],bytes[5]);
@@ -134,6 +135,9 @@ public class MqttService {
         String payloadString = conversion.byteArrayToString(payloadBytes);
         System.out.println(payloadString);
 
+        System.out.println("-------------------------------------------------------------");
+        System.out.println();
+
         /*********** Retrieve Packet Data End  *********************/
 
         //MessageId: 1 for Registration Packet
@@ -159,7 +163,7 @@ public class MqttService {
         else if (messageId == 49) {
             return  binFile.readBinFileStart(sourceId);
         }
-        else if (messageId == 51) {
+        else if (messageId == 51 || messageId == 53) {
             return  binFile.sendBinFileData(sourceId);
         }
         //Message id is not right

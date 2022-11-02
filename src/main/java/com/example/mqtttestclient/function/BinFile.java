@@ -26,7 +26,7 @@ public class BinFile {
 
     //For update firmware
     public static List<Byte> byteArrays = new ArrayList<Byte>();
-    public static Integer firmwarePacketSize = 20000;
+    public static Integer firmwarePacketSize = 60000;
 
     public boolean readBinFile(){
         try (
@@ -101,6 +101,8 @@ public class BinFile {
             for (int i = 0; i < arrayLength; i++) {
                 byteArrays.remove(0);
             }
+            System.out.println("Successfully send: "+arrayLength);
+            System.out.println("Remaining Bytes: "+byteArrays.size());
 
             byte[] publishPacket = new byte[]{};
             try {

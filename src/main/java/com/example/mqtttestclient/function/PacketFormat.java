@@ -23,6 +23,16 @@ public class PacketFormat {
         byte[] byteDestinationId = conversion.oneByteToFourByte(destinationId);
         byte[] bytePayloadLength = conversion.oneByteToEightByte(payloadLength);
 
+        System.out.println("Publish Packet");
+        System.out.println("-------------------------------------------------------------");
+        System.out.println("Packet Length: "+packetLength);
+        System.out.println("Message Id: "+messageId);
+        System.out.println("Source Id: "+sourceId);
+        System.out.println("Destination Id: "+destinationId);
+        System.out.println("Payload Length: "+payloadLength);
+        System.out.println("-------------------------------------------------------------");
+        System.out.println();
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
         outputStream.write( 0x5 );outputStream.write( 0xB );
         outputStream.write( bytePacketLength );
