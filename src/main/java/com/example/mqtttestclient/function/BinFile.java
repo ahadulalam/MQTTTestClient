@@ -25,8 +25,6 @@ public class BinFile {
     private PacketFormat packetFormat;
 
     //For update firmware
-    public static List<Byte> byteArrays = new ArrayList<Byte>();
-
     public static byte[][] realData;
     public static int numberOfPacket;
     public static int flag;
@@ -93,7 +91,7 @@ public class BinFile {
     }
 
     public byte[] readBinFileStart(Integer sourceId){
-        byteArrays.clear();
+
         byte[] publishPayload;
         if(readBinFile()){
             publishPayload = new byte[]{0x0, 0x0, 0x0, 0x1};
