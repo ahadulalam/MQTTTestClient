@@ -26,7 +26,11 @@ public class BinFile {
 
     //For update firmware
     public static List<Byte> byteArrays = new ArrayList<Byte>();
-    public static Integer firmwarePacketSize = 60000;
+
+    public static byte[][] realData;
+    public static int numberOfPacket;
+    public static int flag;
+    public static Integer firmwarePacketSize = 50000;
 
     public boolean readBinFile(){
         try (
@@ -34,21 +38,51 @@ public class BinFile {
                 //OutputStream outputStream = new FileOutputStream("output.bin");
         ) {
 
-            long fileSize = new File("/home/shahidul/Downloads/MQTTTestClient/MQTTTestClient/firmware.bin").length();
-            byte[] allBytes = new byte[(int) fileSize];
+            //long fileSize = new File("/home/shahidul/Downloads/MQTTTestClient/MQTTTestClient/firmware.bin").length();
+            //byte[] allBytes = new byte[(int) fileSize];
             byte[] allData = Files.readAllBytes(Paths.get("/home/shahidul/Downloads/MQTTTestClient/MQTTTestClient/firmware.bin"));
-            for (int i = 0; i < allData.length; i++) {
+
+            int allDataHalfLength = allData.length;
+            int allDataFullLength = allDataHalfLength * 2;
+            numberOfPacket = allDataFullLength / firmwarePacketSize;
+            if(allDataFullLength % firmwarePacketSize != 0){
+                numberOfPacket++;
+            }
+            flag = 0;
+
+            realData = new byte[numberOfPacket][];
+
+            int j = 0; int k = 0;
+            for (int i = 0; i < allDataHalfLength; i++, k+=2) {
                 byte[] conversionResponse = conversion.oneByteToTwoByte(allData[i]);
-                byteArrays.add(conversionResponse[0]);
-                byteArrays.add(conversionResponse[1]);
+
+                //Managing insert value in 2D array
+                if(k == firmwarePacketSize){
+                    j++;
+                    k=0;
+                    //System.out.println("J = "+j+" K = "+k);
+                }
+
+                if(j == (numberOfPacket-1) && k == 0){
+                    realData[j] = new byte[allDataFullLength - (i*2)];
+                }else if(k == 0){
+                    realData[j] = new byte[firmwarePacketSize];
+                }
+                realData[j][k] = conversionResponse[0];
+                realData[j][k+1] = conversionResponse[1];
+
+                /*byteArrays.add(conversionResponse[0]);
+                byteArrays.add(conversionResponse[1]);*/
             }
             /*for (int i = 0; i < byteArrays.size(); i++) {
                 System.out.print(byteArrays.get(i)+" ");
             }*/
             System.out.println();
             System.out.println("File and Array Information");
-            System.out.println("Actual File Size: "+fileSize);
-            System.out.println("Convert Array Size: "+byteArrays.size());
+            System.out.println("Actual File Size: "+allDataFullLength);
+            System.out.println("Array Size: "+realData.length);
+            System.out.println("2D Array Size of position:"+(1)+" Data Length: "+realData[0].length);
+            System.out.println();
 
             return true;
 
@@ -80,8 +114,24 @@ public class BinFile {
     }
 
     public byte[] sendBinFileData(Integer sourceId){
+
         //Check Array File empty or not
-        if(byteArrays.isEmpty()){
+        if(numberOfPacket <= flag){
+            return readBinFileEnd(sourceId);
+        }else{
+            byte[] publishPacket = new byte[]{};
+            try {
+                //Create Publish Packet
+                publishPacket = packetFormat.createPacketFormat(14+(realData[flag].length / 2),52, 64250, sourceId, (realData[flag].length / 2), realData[flag]);
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            flag++;
+            System.out.println("Number of Packet: "+numberOfPacket+" Send Packet: "+(flag+1));
+            return publishPacket;
+        }
+        /*if(byteArrays.isEmpty()){
             return readBinFileEnd(sourceId);
         }else{
             Integer arrayLength;
@@ -103,6 +153,7 @@ public class BinFile {
             }
             System.out.println("Successfully send: "+arrayLength);
             System.out.println("Remaining Bytes: "+byteArrays.size());
+            System.out.println();
 
             byte[] publishPacket = new byte[]{};
             try {
@@ -114,7 +165,7 @@ public class BinFile {
             }
 
             return publishPacket;
-        }
+        }*/
     }
 
     public byte[] readBinFileEnd(Integer sourceId){
