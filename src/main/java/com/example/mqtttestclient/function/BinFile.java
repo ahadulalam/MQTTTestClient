@@ -26,9 +26,11 @@ public class BinFile {
 
     //For update firmware
     public static byte[][] realData;
+
+    public static int allDataHalfLength;
     public static int numberOfPacket;
     public static int flag;
-    public static Integer firmwarePacketSize = 50000;
+    public static Integer firmwarePacketSize = 30000;
 
     public boolean readBinFile(){
         try (
@@ -36,11 +38,11 @@ public class BinFile {
                 //OutputStream outputStream = new FileOutputStream("output.bin");
         ) {
 
-            //long fileSize = new File("/home/shahidul/Downloads/MQTTTestClient/MQTTTestClient/firmware.bin").length();
+            //long fileSize = new File("/home/shahidul/Downloads/MQTTTestClient/MQTTTestClient/firmware8.bin").length();
             //byte[] allBytes = new byte[(int) fileSize];
             byte[] allData = Files.readAllBytes(Paths.get("/home/shahidul/Downloads/MQTTTestClient/MQTTTestClient/firmware.bin"));
 
-            int allDataHalfLength = allData.length;
+            allDataHalfLength = allData.length;
             int allDataFullLength = allDataHalfLength * 2;
             numberOfPacket = allDataFullLength / firmwarePacketSize;
             if(allDataFullLength % firmwarePacketSize != 0){
@@ -94,7 +96,7 @@ public class BinFile {
 
         byte[] publishPayload;
         if(readBinFile()){
-            publishPayload = new byte[]{0x0, 0x0, 0x0, 0x1};
+            publishPayload = conversion.oneByteToFourByte(allDataHalfLength);
         }else{
             publishPayload = new byte[]{0x0, 0x0, 0x0, 0x0};
         }

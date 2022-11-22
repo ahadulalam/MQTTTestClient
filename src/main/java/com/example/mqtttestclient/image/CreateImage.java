@@ -15,9 +15,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -35,13 +33,14 @@ public class CreateImage {
 
 
     public static Map<Integer, byte[]> imageData = new HashMap<>();
+
     public byte[] imageDataBegin(Integer sourceId){
         imageData.remove(sourceId);
         byte[] publishPayload = new byte[]{0x0, 0x0, 0x0, 0x0};
         byte[] publishPacket = new byte[]{};
         try {
             //Create Publish Packet
-            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),8, 64250, sourceId, (publishPayload.length / 2), publishPayload);
+            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),6, 64250, sourceId, (publishPayload.length / 2), publishPayload);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -52,6 +51,8 @@ public class CreateImage {
     public byte[] imageDataEnd(Integer sourceId, Integer metaData) throws IOException {
         System.out.println("Image Data");
         System.out.println("--------------------------");
+        System.out.println("Image Total byte: "+ imageData.get(sourceId).length);
+
         byte[] imageFullData = imageData.get(sourceId);
         byte[] imageActualData = new byte[imageFullData.length/2];
 
@@ -66,10 +67,10 @@ public class CreateImage {
         //Image name dynamic
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         LocalDateTime now = LocalDateTime.now();
-        String imageName = "./images/"+sourceId+dtf.format(now)+".jpg";
+        String imageName = "/home/shahidul/Downloads/MQTTTestClient/MQTTTestClient/images/"+sourceId+dtf.format(now)+".jpg";
 
         //Save Image to file
-        String res = conversion.byteToImage(imageActualData, imageName);
+        String res = conversion.byteToImage(imageFullData, imageName);
         System.out.println(res);
 
         if(res == "Image create successfully"){
@@ -80,12 +81,14 @@ public class CreateImage {
             transactionRepository.save(transaction);
         }
 
+        System.out.println("--------------------------");
+
         //Publish result
         byte[] publishPayload = new byte[]{0x0, 0x0, 0x0, 0x0};
         byte[] publishPacket = new byte[]{};
         try {
             //Create Publish Packet
-            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),8, 64250, sourceId, (publishPayload.length / 2), publishPayload);
+            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),10, 64250, sourceId, (publishPayload.length / 2), publishPayload);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -110,7 +113,7 @@ public class CreateImage {
         byte[] publishPacket = new byte[]{};
         try {
             //Create Publish Packet
-            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),6, 64250, sourceId, (publishPayload.length / 2), publishPayload);
+            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),8, 64250, sourceId, (publishPayload.length / 2), publishPayload);
 
         } catch (IOException e) {
             throw new RuntimeException(e);

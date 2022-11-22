@@ -89,7 +89,7 @@ public class MqttService {
         byte[] publishPacket = new byte[]{};
         try {
             //Create Publish Packet
-            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),4, 64250, sourceId, (publishPayload.length / 2), publishPayload);
+            publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),4, 64250, sourceId, Math.toIntExact(uniqueSensorId), publishPayload);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
