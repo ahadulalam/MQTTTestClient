@@ -32,6 +32,11 @@ dependencies {
     runtimeOnly 'mysql:mysql-connector-java'
     implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.2.4'
 
+    //WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.14.1'
+    implementation group: 'org.webjars', name: 'sockjs-client', version: '1.1.2'
+
 }
 
 tasks.named('test') {

@@ -65,21 +65,21 @@ public class CreateImage {
         }
 
         //Image name dynamic
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         LocalDateTime now = LocalDateTime.now();
         String imageName = "/home/shahidul/Downloads/MQTTTestClient/MQTTTestClient/images/"+sourceId+dtf.format(now)+".jpg";
 
         //Save Image to file
-        String res = conversion.byteToImage(imageFullData, imageName);
+        String res = conversion.byteToImage(imageActualData, imageName);
         System.out.println(res);
 
-        if(res == "Image create successfully"){
+        /*if(res == "Image create successfully"){
             DeviceWiseParticularSensor deviceWiseParticularSensor = deviceWiseParticularSensorRepository.findById(metaData.longValue()).get();
             Transaction transaction = new Transaction();
             transaction.setPayload(imageName);
             transaction.setDeviceWiseParticularSensor(deviceWiseParticularSensor);
             transactionRepository.save(transaction);
-        }
+        }*/
 
         System.out.println("--------------------------");
 

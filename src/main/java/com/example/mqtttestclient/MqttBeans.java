@@ -52,7 +52,7 @@ public class MqttBeans implements MqttGateway{
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setServerURIs(new String[] {"tcp://192.168.137.169:1883"});
+        options.setServerURIs(new String[] {"tcp://192.168.100.182:1883"});
         options.setUserName("admin");
         String pass = "123456";
         options.setPassword(pass.toCharArray());
@@ -97,10 +97,13 @@ public class MqttBeans implements MqttGateway{
                         throw new RuntimeException(e);
                     }
                     //Publish to MQTT
-                    try {
-                        publisher.publish("/registration/ID",publishPacket,1,false,mqttClientFactory());
-                    } catch (MqttException e) {
-                        throw new RuntimeException(e);
+                    Integer messageId = conversion.fourByteToOneInteger(bytes[6],bytes[7],bytes[8],bytes[9]);
+                    if(messageId != 7 && messageId != 5 && messageId != 9 ) {
+                        try {
+                            publisher.publish("/registration/ID", publishPacket, 1, false, mqttClientFactory());
+                        } catch (MqttException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
                 //If packet not valid
