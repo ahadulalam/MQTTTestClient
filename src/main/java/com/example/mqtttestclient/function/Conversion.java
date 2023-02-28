@@ -1,7 +1,9 @@
 package com.example.mqtttestclient.function;
 
+import com.example.mqtttestclient.video.CreateVideo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
@@ -16,6 +18,8 @@ import java.util.List;
 @AllArgsConstructor
 @Component
 public class Conversion {
+    @Autowired
+    private CreateVideo createVideo;
 
     public Integer byteToDecimal(byte hex){
         String s = String.valueOf(hex);
@@ -89,10 +93,12 @@ public class Conversion {
         return bytes;
     }
     public String byteToImage(byte[] imageBytes, String imageName) throws IOException {
+        createVideo.createVideo1(imageBytes);
         try {
             ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes);
             BufferedImage bImage2 = ImageIO.read(bis);
             ImageIO.write(bImage2, "jpg", new File(imageName) );
+
             return "Image create successfully";
         }catch (Exception e){
             return "Image not created, reason - "+e.getMessage();

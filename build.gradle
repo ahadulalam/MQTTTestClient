@@ -16,6 +16,10 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven {
+        url 'http://www.dcm4che.org/maven2/'
+        allowInsecureProtocol = true
+    }
 }
 
 dependencies {
@@ -36,6 +40,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.14.1'
     implementation group: 'org.webjars', name: 'sockjs-client', version: '1.1.2'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    //Video
+    implementation group: 'xuggle', name: 'xuggle-xuggler', version: '5.4'
+    compileOnly group: 'xuggle', name: 'xuggle-xuggler', version: '5.4'
 
 }
 

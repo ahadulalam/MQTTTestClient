@@ -6,6 +6,7 @@ import com.example.mqtttestclient.function.Conversion;
 import com.example.mqtttestclient.function.PacketFormat;
 import com.example.mqtttestclient.repository.DeviceWiseParticularSensorRepository;
 import com.example.mqtttestclient.repository.TransactionRepository;
+import com.example.mqtttestclient.video.CreateVideo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,9 +31,10 @@ public class CreateImage {
     private DeviceWiseParticularSensorRepository deviceWiseParticularSensorRepository;
     @Autowired
     private TransactionRepository transactionRepository;
-
-
+    @Autowired
+    private CreateVideo createVideo;
     public static Map<Integer, byte[]> imageData = new HashMap<>();
+    public static Boolean videoBool = true;
 
     public byte[] imageDataBegin(Integer sourceId){
         imageData.remove(sourceId);
@@ -73,6 +75,13 @@ public class CreateImage {
         String res = conversion.byteToImage(imageActualData, imageName);
         System.out.println(res);
 
+        /*createVideo.photoQueue.add(imageName);
+        System.out.println("Queue Size: "+createVideo.photoQueue.size());
+        if(createVideo.photoQueue.size() > 10){
+            //videoBool = false;
+            //new Thread(() -> createVideo.createVideo() ).start();
+            createVideo.createVideo();
+        }*/
         /*if(res == "Image create successfully"){
             DeviceWiseParticularSensor deviceWiseParticularSensor = deviceWiseParticularSensorRepository.findById(metaData.longValue()).get();
             Transaction transaction = new Transaction();
@@ -91,7 +100,7 @@ public class CreateImage {
             publishPacket = packetFormat.createPacketFormat(14+(publishPayload.length / 2),10, 64250, sourceId, (publishPayload.length / 2), publishPayload);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            //throw new RuntimeException(e);
         }
         imageData.remove(sourceId);
         return publishPacket;

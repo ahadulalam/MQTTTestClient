@@ -133,6 +133,8 @@ public class MqttService {
 
         byte[] payloadBytes = Arrays.copyOfRange(bytes, 26, bytes.length-2);
         String payloadString = conversion.byteArrayToString(payloadBytes);
+        String fullBytes = conversion.byteArrayToString(bytes);
+        System.out.println("Full Array: "+fullBytes);
         System.out.println(payloadString);
 
         System.out.println("-------------------------------------------------------------");

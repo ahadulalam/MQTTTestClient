@@ -8,10 +8,6 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
-import java.io.ByteArrayOutputStream;
-import java.util.Arrays;
-import java.util.Objects;
-
 @Service
 public class PreDefinedDataService {
     @Autowired
@@ -72,6 +68,7 @@ public class PreDefinedDataService {
     }
 
     public void sensorSaveAll(){
+
         Map<Integer, byte[]> imageData = new HashMap<>();
         byte[] first = new byte[]{0x0, 0x1};
         byte[] second = new byte[]{0x2, 0x3};
